@@ -44,17 +44,49 @@ def print_edges(graph):
         print(f'({u} -- {v})')
 
 
-def print_graph(graph):
-    pos = nx.spring_layout(graph)
-    nx.draw(graph, pos)
-    #edge_labels = {(u, v): d for u, v, d in graph.edges}
-    vertex_weight = {u: f'{u}:{w["weight"]}'  for u, w in graph.nodes.data()}
-    nx.draw_networkx_labels(graph, pos, labels=vertex_weight)
+def print_graph(Graphs):
+    fig, axes = plt.subplots(nrows=int(len(Graphs) / 2) + 1, ncols=2)
+    ax = axes.flatten()
+    for index, graph in enumerate(Graphs):
+        pos = nx.bipartite_layout(graph, [node for ind, node in enumerate(graph.nodes) if ind < len(graph.nodes) / 2])
+        nx.draw(graph, pos, ax=ax[index])
+        vertex_weight = {u: f'{u}:{w["weight"]}' for u, w in graph.nodes.data()}
+        nx.draw_networkx_labels(graph, pos, labels=vertex_weight, ax=ax[index])
+        ax[index].set_axis_off()
     plt.show()
+
+
+def print_graph2(Graphs):
+    # fig, axes = plt.subplots(nrows=int(len(Graphs) / 2) + 1, ncols=2)
+    # ax = axes.flatten()
+    for index, graph in enumerate(Graphs):
+        plt.figure(index + 1)
+        pos = nx.bipartite_layout(graph, [node for ind, node in enumerate(graph.nodes) if ind < len(graph.nodes) / 2])
+        nx.draw(graph, pos)
+        vertex_weight = {u: f'{u}:{w["weight"]}' for u, w in graph.nodes.data()}
+        nx.draw_networkx_labels(graph, pos, labels=vertex_weight)
+    plt.show()
+
+
+def local_ratio_vertex_cover(Graphs, graph):
+    # before
+    Graphs.append(graph)
+    # iterate
+    for u, v in graph.edges:
+        curr_graph = graph.copy()
+        epsilon = min(curr_graph.nodes[u]['weight'], curr_graph.nodes[v]['weight'])
+        curr_graph.nodes[u]['weight'] -= epsilon
+        curr_graph.nodes[v]['weight'] -= epsilon
+        # print_graph(graph)
+        Graphs.append(curr_graph)
+        graph = curr_graph
+    # result
+    Graphs.append(graph)
 
 
 def main():
     graph = nx.Graph()
+    Graphs = []
 
     # nodes = get_nodes()
     # for name, weight in nodes.items():
@@ -70,7 +102,9 @@ def main():
     # print(graph.nodes)
     # print_edges(graph)
 
-    print_graph(graph)
+    local_ratio_vertex_cover(Graphs, graph)
+
+    print_graph2(Graphs)
 
 
 if __name__ == '__main__':
