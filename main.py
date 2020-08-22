@@ -2,6 +2,18 @@ import networkx as nx
 import matplotlib.pyplot as plt
 
 
+UNMARKED_VERTEX = '#FAEBD7'
+MARKED_VERTEX = 'red'
+WEIGHT = 'weight'
+VERTEX_COVER = '#00FF00'
+
+
+class Graph:
+    def __init__(self, graph, color_map):
+        self.graph = graph
+        self.color_map = color_map
+
+
 def skip_redundant_spaces_in_str(str):
     return str.strip()
 
@@ -45,43 +57,52 @@ def print_edges(graph):
 
 
 def print_graph(Graphs):
-    fig, axes = plt.subplots(nrows=int(len(Graphs) / 2) + 1, ncols=2)
-    ax = axes.flatten()
-    for index, graph in enumerate(Graphs):
-        pos = nx.bipartite_layout(graph, [node for ind, node in enumerate(graph.nodes) if ind < len(graph.nodes) / 2])
-        nx.draw(graph, pos, ax=ax[index])
-        vertex_weight = {u: f'{u}:{w["weight"]}' for u, w in graph.nodes.data()}
-        nx.draw_networkx_labels(graph, pos, labels=vertex_weight, ax=ax[index])
-        ax[index].set_axis_off()
-    plt.show()
-
-
-def print_graph2(Graphs):
-    # fig, axes = plt.subplots(nrows=int(len(Graphs) / 2) + 1, ncols=2)
-    # ax = axes.flatten()
     for index, graph in enumerate(Graphs):
         plt.figure(index + 1)
-        pos = nx.bipartite_layout(graph, [node for ind, node in enumerate(graph.nodes) if ind < len(graph.nodes) / 2])
-        nx.draw(graph, pos)
-        vertex_weight = {u: f'{u}:{w["weight"]}' for u, w in graph.nodes.data()}
-        nx.draw_networkx_labels(graph, pos, labels=vertex_weight)
+        pos = nx.circular_layout(graph.graph)
+        nx.draw(graph.graph, pos)
+        vertex_weight = {u: f'{u}:{w[WEIGHT]}' for u, w in graph.graph.nodes.data()}
+        nx.draw_networkx_nodes(graph.graph, pos, node_color=graph.color_map)
+        nx.draw_networkx_labels(graph.graph, pos, labels=vertex_weight)
     plt.show()
+
+
+def color_vertex_participate_in_edge(nodes, u, v):
+    color_map = []
+    for node in nodes:
+        if node != u and node != v:
+            color_map.append(UNMARKED_VERTEX)
+        else:
+            color_map.append(MARKED_VERTEX)
+    return color_map
+
+
+def color_vertex_in_cover(nodes):
+    color_map = []
+    for u, w in nodes.data():
+        if w[WEIGHT] == 0:
+            color_map.append(VERTEX_COVER)
+        else:
+            color_map.append(UNMARKED_VERTEX)
+    return color_map
 
 
 def local_ratio_vertex_cover(Graphs, graph):
     # before
-    Graphs.append(graph)
+    Graphs.append(Graph(graph, [UNMARKED_VERTEX for node in graph.nodes]))
     # iterate
     for u, v in graph.edges:
+        Graphs.append(Graph(graph, color_vertex_participate_in_edge(graph.nodes, u, v)))
         curr_graph = graph.copy()
-        epsilon = min(curr_graph.nodes[u]['weight'], curr_graph.nodes[v]['weight'])
-        curr_graph.nodes[u]['weight'] -= epsilon
-        curr_graph.nodes[v]['weight'] -= epsilon
+        epsilon = min(curr_graph.nodes[u][WEIGHT], curr_graph.nodes[v][WEIGHT])
+        curr_graph.nodes[u][WEIGHT] -= epsilon
+        curr_graph.nodes[v][WEIGHT] -= epsilon
         # print_graph(graph)
-        Graphs.append(curr_graph)
+        Graphs.append(Graph(curr_graph, color_vertex_participate_in_edge(graph.nodes, u, v)))
         graph = curr_graph
     # result
-    Graphs.append(graph)
+    Graphs.append(Graph(graph, [UNMARKED_VERTEX for node in graph.nodes]))
+    Graphs.append(Graph(graph, color_vertex_in_cover(graph.nodes)))
 
 
 def main():
@@ -96,7 +117,7 @@ def main():
     nodes = {'a':2, 'b':3, 'c':5, 'd':1, 'e':2, 'f':3}
     for name, weight in nodes.items():
         graph.add_node(name, weight=weight)
-    graph.add_edges_from([('a','b'), ('a','c'), ('a','d'), ('b','c'), ('b','d'), ('d','e'), ('e','f')])
+    graph.add_edges_from([('a','b'), ('a','c'), ('a','d'), ('b','d'), ('d','e'), ('e','f')])
 
     # debug
     # print(graph.nodes)
@@ -104,7 +125,7 @@ def main():
 
     local_ratio_vertex_cover(Graphs, graph)
 
-    print_graph2(Graphs)
+    print_graph(Graphs)
 
 
 if __name__ == '__main__':
