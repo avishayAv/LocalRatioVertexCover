@@ -57,15 +57,16 @@ def print_edges(graph):
 
 
 def print_graph(Graphs):
+    plt.figure(1)
     for index, graph in enumerate(Graphs):
-        plt.figure(index + 1)
         pos = nx.circular_layout(graph.graph)
         nx.draw(graph.graph, pos)
         vertex_weight = {u: f'{u}:{w[WEIGHT]}' for u, w in graph.graph.nodes.data()}
         nx.draw_networkx_nodes(graph.graph, pos, node_color=graph.color_map)
         nx.draw_networkx_labels(graph.graph, pos, labels=vertex_weight)
+        plt.pause(2)
+        plt.clf()
     plt.show()
-
 
 def color_vertex_participate_in_edge(nodes, u, v):
     color_map = []
